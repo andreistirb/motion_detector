@@ -32,7 +32,7 @@ while True:
     
     orig_array.append(frame)
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray, (3,3), 0)
+    blur = cv2.GaussianBlur(gray, (11,11), 0)
     
     img_array.append(blur)
     
@@ -53,7 +53,7 @@ print(X.shape)
 #3D fast fourier transform on the whole sequence of frames
 q = np.fft.fftn(X)
 
-
+#compute the phase angle
 angle = np.arctan2(q.imag, q.real)
 
 #compute phase spectrum array from q
@@ -63,14 +63,16 @@ phase_spectrum_array = np.exp(1j*angle)
 reconstructed_array = np.fft.ifftn(phase_spectrum_array)
 
 #reconstruct the frames of the video
-
+q= 0
 for i in range(0,X.shape[0]):
     #smooth the frame using the averaging filter
     frame = abs(reconstructed_array[i])
     
+    filteredFrame = cv2.GaussianBlur(frame, (15,15), 0)
+    
     #convert the frame into binary image using mean value as threshold
     mean_value = np.mean(frame)
-    ret, binary_frame = cv2.threshold(frame, 1.6*mean_value, 255, cv2.THRESH_BINARY)
+    ret, binary_frame = cv2.threshold(filteredFrame, 2*mean_value, 255, cv2.THRESH_BINARY) #previous alpha of mean = 1.6
     
     #perform morphological operations
     
@@ -78,6 +80,11 @@ for i in range(0,X.shape[0]):
     
     closing = cv2.morphologyEx(binary_frame, cv2.MORPH_CLOSE, kernel)
     opening = cv2.morphologyEx(binary_frame, cv2.MORPH_OPEN, kernel)
+    
+    if q==0:
+        print(frame)
+        q = 1
+    #cv2.imshow("abs", frame)
     
     cv2.imshow("Binary", binary_frame)
     cv2.imshow("Opening", opening)
