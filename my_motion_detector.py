@@ -72,7 +72,9 @@ for i in range(0,X.shape[0]):
     
     #convert the frame into binary image using mean value as threshold
     mean_value = np.mean(filteredFrame)
-    ret, binary_frame = cv2.threshold(filteredFrame, 2*mean_value, 255, cv2.THRESH_BINARY) #previous alpha of mean = 1.6
+    
+    #median_value = np.median(filteredFrame)
+    ret, binary_frame = cv2.threshold(filteredFrame, 1.8*mean_value, 255, cv2.THRESH_BINARY) #previous alpha of mean = 1.6
     
     #perform morphological operations
     
@@ -81,8 +83,9 @@ for i in range(0,X.shape[0]):
     closing = cv2.morphologyEx(binary_frame, cv2.MORPH_CLOSE, kernel)
     opening = cv2.morphologyEx(binary_frame, cv2.MORPH_OPEN, kernel)
     
+    
     if q==0:
-        print(frame)
+        print(closing)
         q = 1
     #cv2.imshow("abs", frame)
     
