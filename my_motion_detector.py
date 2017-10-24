@@ -7,6 +7,9 @@ Created on Mon Oct 23 13:23:43 2017
 
 import cv2
 import argparse
+import numpy as np
+import matplotlib.pyplot as plt
+import imutils
 
 #parse the arguments
 ap = argparse.ArgumentParser()
@@ -14,20 +17,84 @@ ap.add_argument("-v", "--video", help="path to the video file")
 args = vars(ap.parse_args())
 
 camera = cv2.VideoCapture(args["video"])
+camera.set(0 , 100000)
+
+img_array = []
+orig_array = []
 
 while True:
     (grabbed, frame) = camera.read()
     
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray, (25,25), 0)
+    if(grabbed == False):
+        break
     
-    cv2.imshow("Original", frame)
-    cv2.imshow("Blurred", blur)
+    frame = imutils.resize(frame, width=300)
+    
+    orig_array.append(frame)
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(gray, (3,3), 0)
+    
+    img_array.append(blur)
+    
+    #cv2.imshow("Original", frame)
+    #cv2.imshow("Blurred", blur)
 
-    key = cv2.waitKey(1) & 0xFF
+   # key = cv2.waitKey(25) & 0xFF
+                     
+    #if key == ord("q"):
+        #break
+    
+    
+X = np.array(img_array)
+O = np.array(orig_array)
+print(X.size)
+print(X.shape)
+
+#3D fast fourier transform on the whole sequence of frames
+q = np.fft.fftn(X)
+
+
+angle = np.arctan2(q.imag, q.real)
+
+#compute phase spectrum array from q
+phase_spectrum_array = np.exp(1j*angle)
+
+#apply 3d inverse fast fourier transform on phase spectrum array
+reconstructed_array = np.fft.ifftn(phase_spectrum_array)
+
+#reconstruct the frames of the video
+
+for i in range(0,X.shape[0]):
+    #smooth the frame using the averaging filter
+    frame = abs(reconstructed_array[i])
+    
+    #convert the frame into binary image using mean value as threshold
+    mean_value = np.mean(frame)
+    ret, binary_frame = cv2.threshold(frame, 1.6*mean_value, 255, cv2.THRESH_BINARY)
+    
+    #perform morphological operations
+    
+    kernel = np.ones((5,5), np.uint8)
+    
+    closing = cv2.morphologyEx(binary_frame, cv2.MORPH_CLOSE, kernel)
+    opening = cv2.morphologyEx(binary_frame, cv2.MORPH_OPEN, kernel)
+    
+    cv2.imshow("Binary", binary_frame)
+    cv2.imshow("Opening", opening)
+    cv2.imshow("Blurred", X[i])
+    cv2.imshow("Original", O[i])
+    cv2.imshow("Closing", closing)
+    
+    key = cv2.waitKey(10) & 0xFF
                      
     if key == ord("q"):
         break
-                
+
+    
+    #superimpose segmented masks on its respective frames to obtain moving objects
+    
+    
+
+
                      
                      
