@@ -71,7 +71,7 @@ for i in range(0,X.shape[0]):
     filteredFrame = cv2.GaussianBlur(frame, (15,15), 0)
     
     #convert the frame into binary image using mean value as threshold
-    mean_value = np.mean(frame)
+    mean_value = np.mean(filteredFrame)
     ret, binary_frame = cv2.threshold(filteredFrame, 2*mean_value, 255, cv2.THRESH_BINARY) #previous alpha of mean = 1.6
     
     #perform morphological operations
