@@ -9,6 +9,8 @@ import cv2
 import argparse
 import numpy as np
 import imutils
+import pickle
+import os
 
 #parse the arguments
 ap = argparse.ArgumentParser()
@@ -53,8 +55,16 @@ angle = np.arctan2(q.imag, q.real)
 #compute phase spectrum array from q
 phase_spectrum_array = np.exp(1j*angle)
 
-#apply 3d inverse fast fourier transform on phase spectrum array
-reconstructed_array = np.fft.ifftn(phase_spectrum_array)
+# Serialize the fourier object
+if (os.access('stream_fft.pickle', os.R_OK)):
+    pickle_in = open('stream_fft.pickle', 'rb')
+    reconstructed_array = pickle.load(pickle_in)
+    pickle_in.close()
+else:
+    #apply 3d inverse fast fourier transform on phase spectrum array
+    reconstructed_array = np.fft.ifftn(phase_spectrum_array)
+    with open('stream_fft.pickle', 'wb') as f:
+        pickle.dump(reconstructed_array, f)
 
 #reconstruct the frames of the video
 q= 0
@@ -85,7 +95,7 @@ for i in range(0,O.shape[0]):
 	 #loop over the contours
     for c in cnts:
 		 #if the contour is too small, ignore it
-        if cv2.contourArea(c) < 100:
+        if cv2.contourArea(c) < 500:
             continue
 
 		# compute the bounding box for the contour, draw it on the frame,
