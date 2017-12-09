@@ -8,7 +8,7 @@ Created on Mon Oct 23 13:23:43 2017
 import cv2
 import argparse
 import numpy as np
-import imutils
+#import imutils
 import pickle
 import os
 
@@ -18,8 +18,8 @@ ap.add_argument("-v", "--video", help="path to the video file")
 args = vars(ap.parse_args())
 
 camera = cv2.VideoCapture(args["video"])
-camera.set(0, 150000) # in order for the fast fourier objects not be too large
-#camera.set(0,0)
+# camera.set(0, 150000) # in order for the fast fourier objects not be too large
+camera.set(0,100000)
 img_array = []
 orig_array = []
 
@@ -35,7 +35,7 @@ while True:
     if(grabbed == False):
         break
     
-    frame = imutils.resize(frame, width=300)
+    #frame = imutils.resize(frame, width=535)
     
     orig_array.append(frame)
     frame = background.apply(frame)  
@@ -44,6 +44,7 @@ while True:
     blur = cv2.GaussianBlur(frame, (7,7), 0)
     img_array.append(blur)
     
+camera.release()
 X = np.array(img_array)
 
 # We need this only for displaying the result
@@ -84,7 +85,8 @@ else:
         f.close()
 
 # TO-DO Output to movie
-# writer = cv2.VideoWriter('fourier.avi', cv2.CV_FOURCC('P','I','M','1'), 25, (300,168))
+output_size = (426,240) # Original the size was 300x168
+writer = cv2.VideoWriter('demo.avi', cv2.VideoWriter_fourcc(*'XVID'), 30, output_size, isColor=True)
 
 # Reconstruct the frames of the video
 for i in range(0,O.shape[0]):
@@ -129,7 +131,7 @@ for i in range(0,O.shape[0]):
     cv2.imshow("Binary", binary_frame)
     # cv2.imshow("Opening", opening)
     cv2.imshow("Original", O[i])
-    # writer.write(O[i])
+    writer.write(O[i])
     # cv2.imshow("Closing", closing)
     
     key = cv2.waitKey(20) & 0xFF
@@ -137,6 +139,7 @@ for i in range(0,O.shape[0]):
     if key == ord("q"):
         break
 
+writer.release()
 cv2.destroyAllWindows()
 
 
