@@ -19,8 +19,11 @@ args = vars(ap.parse_args())
 
 camera = cv2.VideoCapture(args["video"])
 camera.set(0, 150000) # in order for the fast fourier objects not be too large
+#camera.set(0,0)
 img_array = []
 orig_array = []
+
+background = cv2.createBackgroundSubtractorKNN()
 
 # Take each frame of the video and build two arrays,
 # one with original frames and the other with blurred
@@ -35,9 +38,10 @@ while True:
     frame = imutils.resize(frame, width=300)
     
     orig_array.append(frame)
+    frame = background.apply(frame)  
     
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray, (11,11), 0)
+    # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(frame, (7,7), 0)
     img_array.append(blur)
     
 X = np.array(img_array)
@@ -87,7 +91,7 @@ for i in range(0,O.shape[0]):
     # Smooth the frame using the averaging filter
     frame = abs(reconstructed_array[i])
     
-    filteredFrame = cv2.GaussianBlur(frame, (5,5), 0)
+    filteredFrame = cv2.GaussianBlur(frame, (13,13), 0)
     
     # Convert the frame into binary image using mean value as threshold
     mean_value = np.mean(filteredFrame)
@@ -97,22 +101,22 @@ for i in range(0,O.shape[0]):
     
     # Denoise the binary_frame
     npbinary = np.array(binary_frame, dtype = np.uint8)
-    denoised = cv2.fastNlMeansDenoising(src=npbinary, h=120, templateWindowSize=7, searchWindowSize=21)
+    # denoised = cv2.fastNlMeansDenoising(src=npbinary, h=120, templateWindowSize=7, searchWindowSize=21)
     
     # Perform morphological operations
-    kernel = np.ones((13,13), np.uint8)
+    # kernel = np.ones((13,13), np.uint8)
     
     # closing = cv2.morphologyEx(binary_frame, cv2.MORPH_CLOSE, kernel)
     # opening = cv2.morphologyEx(binary_frame, cv2.MORPH_OPEN, kernel)
                 
     (_, cnts, _) = cv2.findContours(npbinary, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
 
-    cv2.drawContours(denoised, cnts, -1, (157,192,12), -1)
+    #cv2.drawContours(denoised, cnts, -1, (157,192,12), -1)
     # cv2.drawContours(O[i], cnts, -1, (0, 255, 0), 3)
 	 # Loop over the contours
     for c in cnts:
 		 # If the contour is too small, ignore it
-        if cv2.contourArea(c) < 200:
+        if cv2.contourArea(c) < 180:
             continue
 
 		# Compute the bounding box for the contour, draw it on the frame,
@@ -121,14 +125,14 @@ for i in range(0,O.shape[0]):
         cv2.rectangle(O[i], (x, y), (x + w, y + h), (0, 255, 0), 2)
         # cv2.rectangle(denoised, (x, y), (x + w, y + h), (255, 255, 0), 2)
     
-    cv2.imshow("Denoised", denoised)
+    #cv2.imshow("Denoised", denoised)
     cv2.imshow("Binary", binary_frame)
     # cv2.imshow("Opening", opening)
     cv2.imshow("Original", O[i])
     # writer.write(O[i])
     # cv2.imshow("Closing", closing)
     
-    key = cv2.waitKey(10) & 0xFF
+    key = cv2.waitKey(20) & 0xFF
                      
     if key == ord("q"):
         break
